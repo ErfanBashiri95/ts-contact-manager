@@ -1,4 +1,5 @@
-const BASE = import.meta.env.VITE_API_URL ?? "http://localhost:3000";
+const BASE = "http://localhost:3000"
+console.log("API BASE=",import.meta.env.VITE_API_URL);
 
 export type Contact = {
     id: string;
