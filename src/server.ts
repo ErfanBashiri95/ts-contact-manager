@@ -1,85 +1,82 @@
 import express from "express";
-import {addContact,listContacts,findByEmail,updateContact,removeContact} from "./contacts";
 import cors from "cors";
+import { listContacts, addContact, updateContact, removeContact } from "./contacts";
 
-const app=express();
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// CORS کامل
+app.use(
+  cors({
+    origin: "*",
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type"],
+  })
+);
+app.options("*", cors());
+
+// برای JSON
 app.use(express.json());
-app.use(cors());
 
-app.get("/health",(_req,res)=>{
-    res.json({ok:true});
-});
+// سلامت
+app.get("/health", (_req, res) => res.json({ ok: true }));
 
-app.get("/contacts",async(_req,res)=>{
-    try{
-        const contacts=await listContacts();
-        res.json(contacts);
-    }catch(e:any){
-        res.status(500).json({error:e.message || "internal Server Error"});
-    }
-});
-
-app.post("/contacts",async(req,res)=>{
-    try{
-        const {name,email,phone,tags}=req.body || {};
-
-        if(!name||!email){
-            return res.status(400).json({error:"name and email are required"});
-        }
-
-        const created=await addContact({
-            name:String(name),
-            email:String(email),
-            phone:phone?String(phone):undefined,
-            tags:Array.isArray(tags)?tags.map(String):[]
-        });
-        res.status(201).json(created);
-    }catch(e:any){
-        res.status(400).json({error:e.message||"Bad Request"});
-    }
-});
-
-app.patch("/contacts/:id",async(req,res)=>{
-    try{
-        const{id}=req.params;
-        const patch=req.body;
-        const updated=await updateContact(id,patch);
-        res.json(updated);
-    }catch(e:any){
-        res.status(500).json({error:e.message || "internal server Error"});
-    }
-});
-
-type PatchBody = Partial<{ name: string; email: string; phone: string; tags: string[] }>;
-
-async function updateHandler(req: express.Request, res: express.Response) {
+// لیست
+app.get("/contacts", async (_req, res) => {
   try {
-    const { id } = req.params;
-    const patch = req.body as PatchBody;
-    const updated = await updateContact(id, patch);
-    res.json(updated);
-  } catch (e: any) {
-    res.status(400).json({ error: e.message || "Bad Request" });
+    const contacts = await listContacts();
+    res.json(contacts);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || "Internal Server Error" });
   }
-}
+});
 
-// هر دو مسیر به یک هندلر وصل می‌شوند
-app.patch("/contacts/:id", updateHandler);
-app.put("/contacts/:id", updateHandler);
+// ساخت
+app.post("/contacts", async (req, res) => {
+  try {
+    const created = await addContact(req.body);
+    res.status(201).json(created);
+  } catch (err: any) {
+    res.status(400).json({ error: err.message || "Failed to create contact" });
+  }
+});
 
-// DELETE /contacts/:id → حذف یک مخاطب
+// ویرایش (PUT)
+app.put("/contacts/:id", async (req, res) => {
+  try {
+    const updated = await updateContact(req.params.id, req.body);
+    res.json(updated);
+  } catch (err: any) {
+    res.status(400).json({ error: err.message || "Failed to update contact" });
+  }
+});
+
+// ویرایش جزئی (PATCH) – به همان updateContact وصل می‌کنیم
+app.patch("/contacts/:id", async (req, res) => {
+  try {
+    const updated = await updateContact(req.params.id, req.body);
+    res.json(updated);
+  } catch (err: any) {
+    res.status(400).json({ error: err.message || "Failed to update contact" });
+  }
+});
+
+// حذف
 app.delete("/contacts/:id", async (req, res) => {
-    try {
-      const { id } = req.params;
-      await removeContact(id);
-      res.json({ ok: true, id });
-    } catch (e: any) {
-      res.status(400).json({ error: e.message || "Bad Request" });
-    }
-  });
+  try {
+    const removed = await removeContact(req.params.id);
+    res.json(removed);
+  } catch (err: any) {
+    res.status(400).json({ error: err.message || "Failed to delete contact" });
+  }
+});
 
-const PORT=process.env.PORT ?
-Number(process.env.PORT): 3000;
-app.listen(PORT,()=>{
-    console.log(`server running on http://localhost:${PORT}`);
+// روت پیش‌فرض
+app.get("/", (_req, res) => {
+  res.status(404).json({ error: "Use /health or /contacts" });
+});
+
+// اجرا
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
 });
