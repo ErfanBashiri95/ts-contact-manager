@@ -13,7 +13,6 @@ app.use(
     allowedHeaders: ["Content-Type"],
   })
 );
-app.options("*", cors());
 
 // برای JSON
 app.use(express.json());
