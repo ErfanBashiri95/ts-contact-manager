@@ -13,6 +13,9 @@
     "cm:remove:ali": "ts-node src/index.ts remove --email ali@mail.com",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "engines":{
+    "node":">=18"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
