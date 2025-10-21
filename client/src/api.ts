@@ -1,7 +1,6 @@
 // client/src/api.ts
-const BASE =
-  (import.meta as any).env?.VITE_API_URL?.trim() ||
-  "http://localhost:3000"; // فقط وقتی .env نبود
+const BASE =import.meta.env.VITE_API_URL;
+  
 
 console.log("API BASE =>", BASE);
 
